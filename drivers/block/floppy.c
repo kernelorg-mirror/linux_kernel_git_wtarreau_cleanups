@@ -4854,6 +4854,8 @@ static void floppy_release_regions(int fdc)
 
 static int floppy_grab_irq_and_dma(void)
 {
+	int fdc;
+
 	if (atomic_inc_return(&usage_count) > 1)
 		return 0;
 
@@ -4881,24 +4883,24 @@ static int floppy_grab_irq_and_dma(void)
 		}
 	}
 
-	for (current_fdc = 0; current_fdc < N_FDC; current_fdc++) {
-		if (fdc_state[current_fdc].address != -1) {
-			if (floppy_request_regions(current_fdc))
+	for (fdc = 0; fdc < N_FDC; fdc++) {
+		if (fdc_state[fdc].address != -1) {
+			if (floppy_request_regions(fdc))
 				goto cleanup;
 		}
 	}
-	for (current_fdc = 0; current_fdc < N_FDC; current_fdc++) {
-		if (fdc_state[current_fdc].address != -1) {
-			reset_fdc_info(current_fdc, 1);
-			fdc_outb(fdc_state[current_fdc].dor, current_fdc, FD_DOR);
+	for (fdc = 0; fdc < N_FDC; fdc++) {
+		if (fdc_state[fdc].address != -1) {
+			reset_fdc_info(fdc, 1);
+			fdc_outb(fdc_state[fdc].dor, fdc, FD_DOR);
 		}
 	}
-	current_fdc = 0;
+
 	set_dor(0, ~0, 8);	/* avoid immediate interrupt */
 
-	for (current_fdc = 0; current_fdc < N_FDC; current_fdc++)
-		if (fdc_state[current_fdc].address != -1)
-			fdc_outb(fdc_state[current_fdc].dor, current_fdc, FD_DOR);
+	for (fdc = 0; fdc < N_FDC; fdc++)
+		if (fdc_state[fdc].address != -1)
+			fdc_outb(fdc_state[fdc].dor, fdc, FD_DOR);
 	/*
 	 * The driver will try and free resources and relies on us
 	 * to know if they were allocated or not.
@@ -4909,8 +4911,9 @@ static int floppy_grab_irq_and_dma(void)
 cleanup:
 	fd_free_irq();
 	fd_free_dma();
-	while (--current_fdc >= 0)
-		floppy_release_regions(current_fdc);
+	while (--fdc >= 0)
+		floppy_release_regions(fdc);
+	current_fdc = 0;
 	atomic_dec(&usage_count);
 	return -1;
 }
