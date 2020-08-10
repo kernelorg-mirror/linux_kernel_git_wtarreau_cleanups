@@ -1721,7 +1721,7 @@ void update_process_times(int user_tick)
 	 * non-constant value that's not affine to the number of calls to make
 	 * sure it's updated when there's some activity (we don't care in idle).
 	 */
-	this_cpu_add(net_rand_state.s1, rol32(jiffies, 24) + user_tick);
+	__this_cpu_add(net_rand_noise, rol32(jiffies, 24) + user_tick);
 }
 
 /**

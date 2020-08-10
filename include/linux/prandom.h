@@ -20,7 +20,7 @@ struct rnd_state {
 	__u32 s1, s2, s3, s4;
 };
 
-DECLARE_PER_CPU(struct rnd_state, net_rand_state);
+DECLARE_PER_CPU(unsigned long, net_rand_noise);
 
 u32 prandom_u32_state(struct rnd_state *state);
 void prandom_bytes_state(struct rnd_state *state, void *buf, size_t nbytes);
@@ -67,6 +67,7 @@ static inline void prandom_seed_state(struct rnd_state *state, u64 seed)
 	state->s2 = __seed(i,   8U);
 	state->s3 = __seed(i,  16U);
 	state->s4 = __seed(i, 128U);
+	__this_cpu_add(net_rand_noise, i);
 }
 
 /* Pseudo random number generator from numerical recipes. */
